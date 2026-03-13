@@ -1,6 +1,6 @@
 //Link to specifications.
 //https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
-//TODO: FIX type differences between functions and their calls, and get RoundKey implemented properly, and add a proper .Main function
+//TODO: FIX type differences between functions and their calls, and get RoundKey implemented properly, and add a proper Main function
 //Changes Between last upload: Implemented Key Expansion Function, started code for Key Expansion EIC (Not completed Yet)
 
 #include <vector>
