@@ -1,6 +1,7 @@
 //Link to specifications.
 //https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
-//AddRoundKey// TODO: Finish implementation
+//TODO: FIX type differences between functions and their calls, and get RoundKey implemented properly, and add a proper .Main function
+//Changes Between last upload: Implemented Key Expansion Function, started code for Key Expansion EIC (Not completed Yet)
 
 #include <vector>
 #include <iostream>
@@ -28,6 +29,7 @@ unsigned sArray[16][16] =
     {0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x87,0x0f,0xce,0x54,0xbb,0x16},
 };
 
+//Array used for inverse sArray
 unsigned sInvArray[16][16] = 
 {
     {0x52,0x09,0x6a,0xd5,0x30,0x36,0xa5,0x38,0xbf,0x40,0xa3,0x9e,0x81,0xf3,0xd7,0xfb,},
@@ -48,13 +50,45 @@ unsigned sInvArray[16][16] =
     {0x17,0x2b,0x04,0x7e,0xba,0x77,0xd6,0x26,0xe1,0x69,0x14,0x63,0x55,0x21,0x0c,0x7d,},
 };
 
+// *Depricated implementation*
+// //Word array for round Constant, stored in a 2d Array
+// unsigned Rcon[10][4] = 
+// {
+//     {0x01,0x00,0x00,0x00},
+//     {0x02,0x00,0x00,0x00},
+//     {0x04,0x00,0x00,0x00},
+//     {0x08,0x00,0x00,0x00},
+//     {0x10,0x00,0x00,0x00},
+//     {0x20,0x00,0x00,0x00},
+//     {0x40,0x00,0x00,0x00},
+//     {0x80,0x00,0x00,0x00},
+//     {0x1b,0x00,0x00,0x00},
+//     {0x36,0x00,0x00,0x00},
+// };
+//Word array for round Constant, stored as a whole word in a single dimensional array for conviencence.
+unsigned Rcon[10] = 
+{
+    {0x01000000},
+    {0x02000000},
+    {0x04000000},
+    {0x08000000},
+    {0x10000000},
+    {0x20000000},
+    {0x40000000},
+    {0x80000000},
+    {0x1b000000},
+    {0x36000000},
+};
+
+
 //Array used by mixColumns()
 unsigned mixArray[4] = {0x02, 0x01, 0x01, 0x03};
 
-std::vector<long> AddRoundKey(std::vector<long> state, long word)
+std::vector<long> AddRoundKey(std::vector<long> state, long word[])
 {
     //addRoundkey
-    state[1] = state[1] ^ word;
+    //Add proper implementation
+    state[1] = state[1] ^ word[1];
     return state;
 }
 
@@ -107,10 +141,10 @@ unsigned subWord(unsigned input)
     unsigned output = 0;
     int a = 0;
     while (a < 4)
-        {
+    {
         output += ((bits[a]) << (24-(8 * a)));
         a++;
-        }
+    }
     return output;
 }
 
@@ -121,23 +155,23 @@ std::vector<long> invSubBytes(std::vector<long>& input)
     unsigned bits[4][4];
     for (int row = 0; row < 4; row++)
     {
-    //Extracts each bit and runs them through the Sbox function
-    bits[0][row] = Sinvbox((input[row] & 0xFF000000) >> 24);
-    bits[1][row] = Sinvbox((input[row] & 0x00FF0000) >> 16);
-    bits[2][row] = Sinvbox((input[row] & 0x0000FF00) >> 8);
-    bits[3][row] = Sinvbox(input[row] & 0x000000FF);
-    std::cout << "Bits 0:" << std::hex << bits[0][row] << std::endl;
-    std::cout << "Bits 1:" << std::hex << bits[1][row] << std::endl;
-    std::cout << "Bits 2:" << std::hex << bits[2][row] << std::endl;
-    std::cout << "Bits 3:" << std::hex << bits[3][row] << std::endl;
-    unsigned output = 0;
-    int a = 0;
-    while (a < 4)
+        //Extracts each bit and runs them through the Sbox function
+        bits[0][row] = Sinvbox((input[row] & 0xFF000000) >> 24);
+        bits[1][row] = Sinvbox((input[row] & 0x00FF0000) >> 16);
+        bits[2][row] = Sinvbox((input[row] & 0x0000FF00) >> 8);
+        bits[3][row] = Sinvbox(input[row] & 0x000000FF);
+        std::cout << "Bits 0:" << std::hex << bits[0][row] << std::endl;
+        std::cout << "Bits 1:" << std::hex << bits[1][row] << std::endl;
+        std::cout << "Bits 2:" << std::hex << bits[2][row] << std::endl;
+        std::cout << "Bits 3:" << std::hex << bits[3][row] << std::endl;
+        unsigned output = 0;
+        int a = 0;
+        while (a < 4)
         {
-        output += ((bits[a][row]) << (24-(8 * a)));
-        a++;
+            output += ((bits[a][row]) << (24-(8 * a)));
+            a++;
         }
-    input[row] = output;
+        input[row] = output;
     }
     return input;
 }
@@ -151,14 +185,14 @@ unsigned rotWord(unsigned input)
     bits[3] = input & 0x000000FF;
     unsigned output = 0;
     for (int a = 0; a < 4; a++)
-        {
+    {
         // std::cout << "Current iterator is: A" << a << std::endl;
         //Shift is equal to column + row modulos 4
         int shift = (1 + a) % 4;
         // std::cout << std::hex << bits[shift] << " ";
         //Bits are bitshifted back to position in increments of 8
         output += ((bits[shift]) << (24-(8 * a)));
-        }
+    }
     return output;
 }
 
@@ -169,27 +203,26 @@ std::vector<long> SubBytes(std::vector<long>& state)
     
     while (row < 4)
     {
-    //Extracts individual bytes from a selected row of state
-    unsigned bits[4];
-    //The individual bytes after being ran through the S-Box
-    unsigned bitsSquigly[4];
-    //b * b^-1 = {01}
-    //Temporary Value to hold shifted bytes
-    unsigned tempVal = 0;  
-    //Extracts each bit from the state and stores it in a temporary array
-    bits[0] = (state[row] & 0xFF000000) >> 24;
-    bits[1] = (state[row] & 0x00FF0000) >> 16;
-    bits[2] = (state[row] & 0x0000FF00) >> 8;
-    bits[3] = state[row] & 0x000000FF;
-    //Actual transformation for each bit in the state
-    //Resets i increment counter when i reaches 4
-    for (int a = 0; a < 4; a++)
+        //Extracts individual bytes from a selected row of state
+        unsigned bits[4];
+        //The individual bytes after being ran through the S-Box
+        unsigned bitsSquigly[4];
+        //b * b^-1 = {01}
+        //Temporary Value to hold shifted bytes
+        unsigned tempVal = 0;  
+        //Extracts each bit from the state and stores it in a temporary array
+        bits[0] = (state[row] & 0xFF000000) >> 24;
+        bits[1] = (state[row] & 0x00FF0000) >> 16;
+        bits[2] = (state[row] & 0x0000FF00) >> 8;
+        bits[3] = state[row] & 0x000000FF;
+        //Actual transformation for each bit in the state
+        //Resets i increment counter when i reaches 4
+        for (int a = 0; a < 4; a++)
         {
-        
-        tempVal += ((bits[a]) << (24-(8 * a)));
+            tempVal += ((bits[a]) << (24-(8 * a)));
         }
-    state[row] = tempVal;
-    row++;
+        state[row] = tempVal;
+        row++;
     }
     return state;
 }
@@ -201,30 +234,30 @@ std::vector<long> ShiftRows(std::vector<long>& state)
     
     while (row < 4)
     {
-    //Extracts individual bytes from a selected row of state
-    unsigned bits[4];
-    //Temporary Value to hold shifted bytes
-    unsigned tempVal = 0;  
-    //Extracts each bit from the state and stores it in a temporary array
-    bits[0] = (state[row] & 0xFF000000) >> 24;
-    bits[1] = (state[row] & 0x00FF0000) >> 16;
-    bits[2] = (state[row] & 0x0000FF00) >> 8;
-    bits[3] = state[row] & 0x000000FF;
-    //Actual transformation for each bit in the state
-    //Resets i increment counter when i reaches 4
-    for (int a = 0; a < 4; a++)
+        //Extracts individual bytes from a selected row of state
+        unsigned bits[4];
+        //Temporary Value to hold shifted bytes
+        unsigned tempVal = 0;  
+        //Extracts each bit from the state and stores it in a temporary array
+        bits[0] = (state[row] & 0xFF000000) >> 24;
+        bits[1] = (state[row] & 0x00FF0000) >> 16;
+        bits[2] = (state[row] & 0x0000FF00) >> 8;
+        bits[3] = state[row] & 0x000000FF;
+        //Actual transformation for each bit in the state
+        //Resets i increment counter when i reaches 4
+        for (int a = 0; a < 4; a++)
         {
-        // std::cout << "Current iterator is: A" << a << std::endl;
-        //Shift is equal to column + row modulos 4
-        int shift = (row + a) % 4;
-        // std::cout << std::hex << bits[shift] << " ";
-        //Bits are bitshifted back to position in increments of 8
-        tempVal += ((bits[shift]) << (24-(8 * a)));
+            // std::cout << "Current iterator is: A" << a << std::endl;
+            //Shift is equal to column + row modulos 4
+            int shift = (row + a) % 4;
+            // std::cout << std::hex << bits[shift] << " ";
+            //Bits are bitshifted back to position in increments of 8
+            tempVal += ((bits[shift]) << (24-(8 * a)));
         }
-    // std::cout << std::endl << "tempVal is:";
-    // std::cout << std::hex << tempVal << std::endl;
-    state[row] = tempVal;
-    row++;
+        // std::cout << std::endl << "tempVal is:";
+        // std::cout << std::hex << tempVal << std::endl;
+        state[row] = tempVal;
+        row++;
     }
     return state;
 }
@@ -322,11 +355,41 @@ std::vector<long> InvMixColumns(std::vector<long>& state)
     return state;
 }
 
-long KeyExpansion(long w[])
+//Implementation of Key Expansion
+long KeyExpansion(long key[], int Nr, int NK)
+{
+    int i = 0;
+    //Define w as a temporary Vector which will be returned.
+    std::vector<long> w = {1};
+    //w.push_back(1);
+    do
+    {
+        //Pull key from 4i to 4i+3
+        w[i] = key[(4*i)*((4*i)+3)];
+        i++;
+    }
+    while (i <= (NK -1));
+    do
+    {
+        unsigned temp = w[i-1];
+        if (i % NK == 0)
+        {
+        temp = subWord(rotWord(temp)) ^ Rcon[i/NK];
+        }
+        else if ((NK > 6) and ((i % NK) == 4))
+        {
+        temp = subWord(temp);
+        }
+        w[i] = w[i- NK] ^ temp;
+        i++;
+    } while (i <= (Nr +3));
+    return 1;
+}
+
+//Alternative implementation of Key Expansion
+long KeyExpansionEIC(long w[], int Nr, int NK)
 {
     // int i =0;
-    
-
     // do
     // {
     //     //Pull key from 4i to 4i+3
@@ -352,7 +415,7 @@ long KeyExpansion(long w[])
 }
 
 
-std::vector<long> AEScipher (int input[],int NumRounds, long w[])
+std::vector<long> AEScipher (int input[],int NumRounds, long w[], int NK)
 {
     //Gets state from input byte array to encrypt
 
@@ -374,19 +437,19 @@ std::vector<long> AEScipher (int input[],int NumRounds, long w[])
     //For loop included in Cipher, state is plugged into SubBytes, ShiftRows, MixColumns, and AddRoundKey again.
     //Need to Implement SubBytes, ShiftRows, and MixColumns
     for (int i = NumRounds; i < (NumRounds-1); i++)
-        {
+    {
         state =   SubBytes(state);
         state =  ShiftRows(state);
         state = MixColumns(state);
         state = AddRoundKey(state,w[0]);
-        }
+    }
     state = SubBytes(state);
     state = ShiftRows(state);
     state = AddRoundKey(state,w[0]);
     return state;
 }
 
-std::vector<long> InvCipher (int input[],int NumRounds, long w[], long key)
+std::vector<long> InvCipher (int input[],int NumRounds, long w[], long key, int NK)
 {
     //Gets state from input byte array to encrypt
 
@@ -415,26 +478,58 @@ std::vector<long> InvCipher (int input[],int NumRounds, long w[], long key)
     return state;
 }
 
-//Key length is 128 bits, Block size is 128 bits, Number of rounds is 10
+//Alternative implementation of Inverse Cipher
+std::vector<long> EqInvCipher (int input[],int NumRounds, long w[], long key, int NK)
+{
+    //Gets state from input byte array to encrypt
+    /*
+    TODO, Continue work on functions.
+    */
+
+    //long state[NumRounds] = input;
+    //State is implemented as a vector of ints, each int holds 4 bytes
+    // std::vector<long>state = input;
+    std::vector<long>state = {0x000000AA, 0x0000AA00, 0x00AA0000, 0xAA000000};
+    //Get iterator value corrected
+    state = AddRoundKey(state, w[10]);
+
+    for (int i = (NumRounds -1); i == 0; i--)
+    {
+        state = InvShiftRows(state);
+        state = invSubBytes(state);
+        state = AddRoundKey(state, w[10]);
+        state = InvMixColumns(state);
+    }
+    state = InvShiftRows(state);
+    state = invSubBytes(state);
+    state = AddRoundKey(state, w[12]);
+
+    return state;
+}
+
+//Key length is 128 bits, Block size is 128 bits, Number of rounds is 10, NK = 4
 std::vector<long> AES128(int input[], long key)
 {
+    int NK = 4;
     long arrayVal[10];
-    std::vector<long> output = AEScipher(input, 10, arrayVal);
+    std::vector<long> output = AEScipher(input, 10, arrayVal, NK);
     return output;
 }
 
-//Key length is 192 bits, Block size is 192 bits, Number of rounds is 12
+//Key length is 192 bits, Block size is 192 bits, Number of rounds is 12, NK = 6
 std::vector<long> AES192(int input[], long key)
 {
+    int NK = 6;
     long arrayVal[12];
-    std::vector<long> output = AEScipher(input, 12, arrayVal);
+    std::vector<long> output = AEScipher(input, 12, arrayVal, NK);
     return output;
 }
 
-//Key length is 256 bits, Block size is 256 bits, Number of rounds is 14
+//Key length is 256 bits, Block size is 256 bits, Number of rounds is 14, NK = 8
 std::vector<long> AES256(int input[], long key)
 {
+    int NK = 8;
     long arrayVal[14];
-    std::vector<long> output = AEScipher(input, 14, arrayVal);
+    std::vector<long> output = AEScipher(input, 14, arrayVal, NK);
     return output;
 }
