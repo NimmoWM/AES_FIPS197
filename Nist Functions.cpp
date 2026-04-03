@@ -84,11 +84,32 @@ unsigned Rcon[10] =
 //Array used by mixColumns()
 unsigned mixArray[4] = {0x02, 0x01, 0x01, 0x03};
 
+//Todo: Test Roundkey Function
 std::vector<long> AddRoundKey(std::vector<long> state, long word[])
 {
     //addRoundkey
     //Add proper implementation
-    state[1] = state[1] ^ word[1];
+    unsigned bits[4][4];
+    for (int i = 0; i < 4; i++)
+    {
+    bits[0][i] = ((state[i] & 0xFF000000) >> 24);
+    bits[1][i] = ((state[i] & 0x00FF0000) >> 16);
+    bits[2][i] = ((state[i] & 0x0000FF00) >> 8);
+    bits[3][i] = (state[i]  & 0x000000FF);
+    }
+
+    for(int i = 0; i < 4; i++)
+    {
+    bits[i][0] = bits[i][0] ^ word[i];
+    bits[i][1] = bits[i][1] ^ word[i];
+    bits[i][2] = bits[i][2] ^ word[i];
+    bits[i][3] = bits[i][3] ^ word[i];
+    }
+
+    for (int a = 0; a < 4; a++)
+    {
+    state[a] = (bits[a][0] << 24) + (bits[a][1] << 16) + (bits[a][2] << 8)+ (bits[a][3]);
+    }
     return state;
 }
 
@@ -365,6 +386,8 @@ long KeyExpansion(long key[], int Nr, int NK)
     do
     {
         //Pull key from 4i to 4i+3
+        //ToDo: Revise Key expansion, implement run thriugh key 4*i through 4*i+3
+        //Didnt implement this right
         w[i] = key[(4*i)*((4*i)+3)];
         i++;
     }
@@ -387,30 +410,34 @@ long KeyExpansion(long key[], int Nr, int NK)
 }
 
 //Alternative implementation of Key Expansion
-long KeyExpansionEIC(long w[], int Nr, int NK)
+long KeyExpansionEIC(long key[], int Nr, int NK)
 {
-    // int i =0;
-    // do
-    // {
-    //     //Pull key from 4i to 4i+3
-    //     w[i] = key[(4*i)*((4*i)+3)];
-    //     i++;
-    // }
-    // while (i <= (Nk -1));
-    // do
-    // {
-    //     unsigned temp = w[i-1];
-    //     if (i % NK == 0)
-    //     {
-    //     temp = subWord(rotWord(temp)) ^ Rcon[i/Nk];
-    //     }
-    //     else if ((NK > 6) and (i % Nk = 4))
-    //     {
-    //     temp = subWord(temp);
-    //     }
-    //     w[i] = w[i- Nk] ^ temp;
-    //     i++;
-    // } while (i <= (Nr +3));
+    std::vector<long> w = {1};
+    int i =0;
+    std::vector<long> dw;
+    do
+    {
+        //Pull key from 4i to 4i+3
+        w[i] = key[(4*i)*((4*i)+3)];
+        dw.push_back(w[i]);
+        i++;
+    }
+    while (i <= (NK -1));
+    do
+    {
+        unsigned temp = w[i-1];
+        if (i % NK == 0)
+        {
+        temp = subWord(rotWord(temp)) ^ Rcon[i/NK];
+        }
+        //Havbing issues with iterator i in this section.
+        else if ((NK > 6) and (i % NK == 4))
+        {
+        temp = subWord(temp);
+        }
+        w[i] = w[i- NK] ^ temp;
+        i++;
+    } while (i <= (Nr +3));
     return 1;
 }
 
@@ -425,7 +452,7 @@ std::vector<long> AEScipher (int input[],int NumRounds, long w[], int NK)
 
     //long state[NumRounds] = input;
     //State is implemented as a vector of ints, each int holds 4 bytes
-    std::vector<long>state;
+    //std::vector<long>state;
     //Push_back
 
     std::vector<long>state = {0x000000AA, 0x0000AA00, 0x00AA0000, 0xAA000000};
@@ -433,7 +460,7 @@ std::vector<long> AEScipher (int input[],int NumRounds, long w[], int NK)
 
     // Run state through the add roundkey function
     //Arguments for this call are from w[0] to w[3]
-    state = AddRoundKey(state, w[0]);
+    state = AddRoundKey(state, w);
     //For loop included in Cipher, state is plugged into SubBytes, ShiftRows, MixColumns, and AddRoundKey again.
     //Need to Implement SubBytes, ShiftRows, and MixColumns
     for (int i = NumRounds; i < (NumRounds-1); i++)
@@ -441,11 +468,11 @@ std::vector<long> AEScipher (int input[],int NumRounds, long w[], int NK)
         state =   SubBytes(state);
         state =  ShiftRows(state);
         state = MixColumns(state);
-        state = AddRoundKey(state,w[0]);
+        state = AddRoundKey(state,w);
     }
     state = SubBytes(state);
     state = ShiftRows(state);
-    state = AddRoundKey(state,w[0]);
+    state = AddRoundKey(state,w);
     return state;
 }
 
@@ -462,18 +489,19 @@ std::vector<long> InvCipher (int input[],int NumRounds, long w[], long key, int 
     // std::vector<long>state = input;
     std::vector<long>state = {0x000000AA, 0x0000AA00, 0x00AA0000, 0xAA000000};
     //Get iterator value corrected
-    state = AddRoundKey(state, w[10]);
+    //Input Whole Key, iterator will be selected in function
+    state = AddRoundKey(state, w);
 
     for (int i = (NumRounds -1); i == 0; i--)
     {
         state = InvShiftRows(state);
         state = invSubBytes(state);
-        state = AddRoundKey(state, w[10]);
+        state = AddRoundKey(state, w);
         state = InvMixColumns(state);
     }
     state = InvShiftRows(state);
     state = invSubBytes(state);
-    state = AddRoundKey(state, w[12]);
+    state = AddRoundKey(state, w);
 
     return state;
 }
@@ -491,18 +519,18 @@ std::vector<long> EqInvCipher (int input[],int NumRounds, long w[], long key, in
     // std::vector<long>state = input;
     std::vector<long>state = {0x000000AA, 0x0000AA00, 0x00AA0000, 0xAA000000};
     //Get iterator value corrected
-    state = AddRoundKey(state, w[10]);
+    state = AddRoundKey(state, w);
 
     for (int i = (NumRounds -1); i == 0; i--)
     {
         state = InvShiftRows(state);
         state = invSubBytes(state);
-        state = AddRoundKey(state, w[10]);
+        state = AddRoundKey(state, w);
         state = InvMixColumns(state);
     }
     state = InvShiftRows(state);
     state = invSubBytes(state);
-    state = AddRoundKey(state, w[12]);
+    state = AddRoundKey(state, w);
 
     return state;
 }
@@ -533,3 +561,4 @@ std::vector<long> AES256(int input[], long key)
     std::vector<long> output = AEScipher(input, 14, arrayVal, NK);
     return output;
 }
+
