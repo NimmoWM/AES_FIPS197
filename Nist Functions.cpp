@@ -181,10 +181,10 @@ std::vector<long> invSubBytes(std::vector<long>& input)
         bits[1][row] = Sinvbox((input[row] & 0x00FF0000) >> 16);
         bits[2][row] = Sinvbox((input[row] & 0x0000FF00) >> 8);
         bits[3][row] = Sinvbox(input[row] & 0x000000FF);
-        std::cout << "Bits 0:" << std::hex << bits[0][row] << std::endl;
-        std::cout << "Bits 1:" << std::hex << bits[1][row] << std::endl;
-        std::cout << "Bits 2:" << std::hex << bits[2][row] << std::endl;
-        std::cout << "Bits 3:" << std::hex << bits[3][row] << std::endl;
+        // std::cout << "Bits 0:" << std::hex << bits[0][row] << std::endl;
+        // std::cout << "Bits 1:" << std::hex << bits[1][row] << std::endl;
+        // std::cout << "Bits 2:" << std::hex << bits[2][row] << std::endl;
+        // std::cout << "Bits 3:" << std::hex << bits[3][row] << std::endl;
         unsigned output = 0;
         int a = 0;
         while (a < 4)
@@ -232,16 +232,17 @@ std::vector<long> SubBytes(std::vector<long>& state)
         //Temporary Value to hold shifted bytes
         unsigned tempVal = 0;  
         //Extracts each bit from the state and stores it in a temporary array
-        bits[0] = (state[row] & 0xFF000000) >> 24;
-        bits[1] = (state[row] & 0x00FF0000) >> 16;
-        bits[2] = (state[row] & 0x0000FF00) >> 8;
-        bits[3] = state[row] & 0x000000FF;
+        bits[0] = Sbox((state[row] & 0xFF000000) >> 24);
+        bits[1] = Sbox((state[row] & 0x00FF0000) >> 16);
+        bits[2] = Sbox((state[row] & 0x0000FF00) >> 8);
+        bits[3] = Sbox(state[row] & 0x000000FF);
         //Actual transformation for each bit in the state
         //Resets i increment counter when i reaches 4
         for (int a = 0; a < 4; a++)
         {
             tempVal += ((bits[a]) << (24-(8 * a)));
         }
+        //std::cout << "tempVal is: " << std::hex << tempVal << "\n";
         state[row] = tempVal;
         row++;
     }
@@ -306,7 +307,7 @@ std::vector<long> InvShiftRows(std::vector<long>& state)
         // std::cout << "Current iterator is: A" << a << std::endl;
         //SUsed (4 - row) + a modulos 4 for the shift formula, using the normal formula but subtracting caused overflow issues.
         int shift = ((4 - row)+ a)% 4;
-        std::cout << "Shift: " << shift<< " ";
+        //std::cout << "Shift: " << shift<< " ";
         //Bits are bitshifted back to position in increments of 8
         tempVal += ((bits[shift]) << (24-(8 * a)));
         }
@@ -342,8 +343,19 @@ std::vector<long> MixColumns(std::vector<long>& state)
     results[1][a] = ((0x01)*bits[0][a]) ^ ((0x02)*bits[1][a]) ^ ((0x03)*bits[2][a]) ^ ((0x01)*bits[3][a]);
     results[2][a] = ((0x01)*bits[0][a]) ^ ((0x01)*bits[1][a]) ^ ((0x02)*bits[2][a]) ^ ((0x03)*bits[3][a]);
     results[3][a] = ((0x03)*bits[0][a]) ^ ((0x01)*bits[1][a]) ^ ((0x01)*bits[2][a]) ^ ((0x02)*bits[3][a]);
+    // std::cout << "Results: " << std::hex << results[0][a] << "\n";
+    // std::cout << "Results: " << std::hex << results[1][a] << "\n";
+    // std::cout << "Results: " << std::hex << results[2][a] << "\n";
+    // std::cout << "Results: " << std::hex << results[3][a] << "\n";
     a++;
     }
+    //Iffy on if this section is working right or not?
+    for (int b = 0; b < 4; b++)
+    {
+    state[b] = (results[b][0] << 24) + (results[b][1] << 16) + (results[b][2] << 8) + (results[b][3]);
+    std::cout << "Results for row " << b << ": " << std::hex << state[b] << "\n";
+    }
+    //Return state
     return state;
 }
 
@@ -367,28 +379,40 @@ std::vector<long> InvMixColumns(std::vector<long>& state)
     int a = 0;
     while (a < 4)
     {
-    results[0][a] = ((0x0e)*bits[0][a]) ^ ((0x0b)*bits[1][a]) ^ ((0x0d)*bits[2][a]) ^ ((0x09)*bits[3][a]);
-    results[1][a] = ((0x09)*bits[0][a]) ^ ((0x0e)*bits[1][a]) ^ ((0x0b)*bits[2][a]) ^ ((0x0d)*bits[3][a]);
-    results[2][a] = ((0x0d)*bits[0][a]) ^ ((0x09)*bits[1][a]) ^ ((0x0e)*bits[2][a]) ^ ((0x0b)*bits[3][a]);
-    results[3][a] = ((0x0b)*bits[0][a]) ^ ((0x0d)*bits[1][a]) ^ ((0x09)*bits[2][a]) ^ ((0x0e)*bits[3][a]);
-    a++;
+        results[0][a] = ((0x0e)*bits[0][a]) ^ ((0x0b)*bits[1][a]) ^ ((0x0d)*bits[2][a]) ^ ((0x09)*bits[3][a]);
+        results[1][a] = ((0x09)*bits[0][a]) ^ ((0x0e)*bits[1][a]) ^ ((0x0b)*bits[2][a]) ^ ((0x0d)*bits[3][a]);
+        results[2][a] = ((0x0d)*bits[0][a]) ^ ((0x09)*bits[1][a]) ^ ((0x0e)*bits[2][a]) ^ ((0x0b)*bits[3][a]);
+        results[3][a] = ((0x0b)*bits[0][a]) ^ ((0x0d)*bits[1][a]) ^ ((0x09)*bits[2][a]) ^ ((0x0e)*bits[3][a]);
+        a++;
     }
+    //Iffy on if this section is working right or not?
+    for (int b = 0; b < 4; b++)
+    {
+    state[b] = (results[b][0] << 24) + (results[b][1] << 16) + (results[b][2] << 8) + (results[b][3]);
+    std::cout << "Results for row " << b << ": " << std::hex << state[b] << "\n";
+    }
+    //Return state
     return state;
 }
 
 //Implementation of Key Expansion
-long KeyExpansion(long key[], int Nr, int NK)
+//long KeyExpansion(long key[], int Nr, int NK)
+std::vector<long> KeyExpansion(long key[], int Nr, int NK)
 {
     int i = 0;
     //Define w as a temporary Vector which will be returned.
-    std::vector<long> w = {1};
+    std::vector<long> w;
+    std::vector<long> temp;
     //w.push_back(1);
     do
     {
         //Pull key from 4i to 4i+3
         //ToDo: Revise Key expansion, implement run thriugh key 4*i through 4*i+3
         //Didnt implement this right
-        w[i] = key[(4*i)*((4*i)+3)];
+        long addValue = key[(4*i)] + key[(4*i) + 1] + key[(4*i) + 2] + key[(4*i) + 3];
+        //w[i] = key[(4*i)*((4*i)+3)];
+        //w[i].push_back(addValue);
+        w[i] = addValue;
         i++;
     }
     while (i <= (NK -1));
@@ -406,7 +430,7 @@ long KeyExpansion(long key[], int Nr, int NK)
         w[i] = w[i- NK] ^ temp;
         i++;
     } while (i <= (Nr +3));
-    return 1;
+    return w;
 }
 
 //Alternative implementation of Key Expansion
