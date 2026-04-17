@@ -563,6 +563,7 @@ std::vector<long> EqInvCipher (int input[],int NumRounds, long w[], long key, in
 std::vector<long> AES128(int input[], long key)
 {
     int NK = 4;
+    //Temporary value, will function as word before KeyExpansion
     long arrayVal[10];
     std::vector<long> output = AEScipher(input, 10, arrayVal, NK);
     return output;
@@ -572,6 +573,7 @@ std::vector<long> AES128(int input[], long key)
 std::vector<long> AES192(int input[], long key)
 {
     int NK = 6;
+    //Temporary value, will function as word before KeyExpansion
     long arrayVal[12];
     std::vector<long> output = AEScipher(input, 12, arrayVal, NK);
     return output;
@@ -581,6 +583,7 @@ std::vector<long> AES192(int input[], long key)
 std::vector<long> AES256(int input[], long key)
 {
     int NK = 8;
+    //Temporary value, will function as word before KeyExpansion
     long arrayVal[14];
     std::vector<long> output = AEScipher(input, 14, arrayVal, NK);
     return output;
