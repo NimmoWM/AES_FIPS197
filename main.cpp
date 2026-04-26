@@ -19,6 +19,7 @@ int main()
     cout << "9: KeyExpansion\n";
     cout << "10: InvKeyExpansion\n";
     cout << "11: KeyExpansionEIC\n";
+    cout << "12: AES128\n";
     // Implement predetermined tests for each function, use switch to determine which to run based on user input.
     int test = 0;
     //Test values used for easy reading of different outputs for individual function outputs
@@ -26,7 +27,14 @@ int main()
     unsigned testword = 0x11223344;
     vector<long> outputVals = {0x00};
     //Test values used to confirm correct function based on Appendix A.1 cipher example in the EAS Document.
-    vector<long> testKey128 = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0xc3};
+    //Key is stored in long values of 4 numbers per value with 2 hex values each.
+    //vector<long> testKey128 = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0xc3};
+    vector<long> testKey128_1 = {0x2b7e516, 0x28aed2a6, 0xabf71588, 0x09cf4fc3};
+    vector<long> testKey128_2 = {0x2b28ab09, 0x7eaef7cf, 0x15d2154f, 0x16a6883c};
+    //vector<long> testInput128 = {0x32, 0x43, 0xf6, 0xa8 , 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
+    //Test input vector in words of 4;
+    vector<long> testInput128 = {0x3243f6a8 , 0x885a308d, 0x313198a2, 0xe0370734};
+    vector<long> testInput128_2 = {0x328831e0 , 0x435a3137, 0xf6309807, 0xa88da234};
     int Nk128 = 4;
     cin >> test;
     cout << endl;
@@ -225,30 +233,9 @@ int main()
         break;
     //Need to make sure my KeyExpansion Functions work, will show different data to test.
     case 9:
-    cout << "You chose to Test KeyExpansion\n";
-        for (int i = 0; i < 4; i++)
-        {
-            unsigned bits[4];
-            // Temporary Value to hold shifted bytes
-            unsigned tempVal = 0;
-            // Extracts each bit from the state and stores it in a temporary array
-            bits2d[i][0] = (testVals[i] & 0xFF000000) >> 24;
-            bits2d[i][1] = (testVals[i] & 0x00FF0000) >> 16;
-            bits2d[i][2] = (testVals[i] & 0x0000FF00) >> 8;
-            bits2d[i][3] = testVals[i] & 0x000000FF;
-            cout << std::hex << bits2d[i][0] << " " << std::hex << bits2d[i][1] << " " << std::hex << bits2d[i][2] << " " << std::hex << bits2d[i][3] << "\n";
-        }
-        outputVals = InvMixColumns(testVals);
+        cout << "You chose to Test KeyExpansion\n";
+        outputVals = KeyExpansion(testKey128_1, 10, 4);
         cout << "After running KeyExpansion\n";
-        for (int i = 0; i < 4; i++)
-        {
-            unsigned bits[4];
-            bits[0] = (outputVals[i] & 0xFF000000) >> 24;
-            bits[1] = (outputVals[i] & 0x00FF0000) >> 16;
-            bits[2] = (outputVals[i] & 0x0000FF00) >> 8;
-            bits[3] = outputVals[i] & 0x000000FF;
-            cout << std::hex << bits[0] << " " << std::hex << bits[1] << " " << std::hex << bits[2] << " " << std::hex << bits[3] << "\n";
-        }
         break;
     case 10:
     cout << "You chose to Test InvKeyExpansion\n";
@@ -302,6 +289,14 @@ int main()
             cout << std::hex << bits[0] << " " << std::hex << bits[1] << " " << std::hex << bits[2] << " " << std::hex << bits[3] << "\n";
         }
         break;
+    //TODO: FIX KEY EXPANSION SO ROUNDKEY WORKS PROPERLY AND FINISH BUGCHECKING AES128
+    case 12:
+        cout << "You chose to Test AES128\n";
+        outputToConsole(testInput128);
+        outputVals = AES128(testInput128,testKey128_1);
+        cout << "After running AES128\n";
+        outputToConsole(outputVals);
+        break;
     default:
         cout << "YOu didn't input anything/You didn't input a correct choice\n";
         break;
@@ -329,7 +324,7 @@ int main()
     unsigned bit5 = 0xff;
     unsigned word1 = 0x00DDEEFF;
     // Testing values for key expansions at sizes 128, 192, and 256 bits.
-    vector<long> testKey128 = {(0x2b7e1516), (0x28aed2a6), (0xabf71588), (0x09cf4f3c)};
+    //vector<long> testKey128 = {(0x2b7e1516), (0x28aed2a6), (0xabf71588), (0x09cf4f3c)};
     vector<long> testKey192 = {(0x8e73b0f7), (0xda0e6452), (0xc810f32b), (0x809079e5), (0x62f8ead2), (0x522c6b7b)};
     vector<long> testKey256 = {(0x603deb10), (0x15ca71be), (0x2b73aef0), (0x857d7781), (0x1f352c07), (0x3b6108d7), (0x2d9810a3), (0x0914dff4)};
 

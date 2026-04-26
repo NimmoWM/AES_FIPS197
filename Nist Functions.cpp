@@ -84,9 +84,28 @@ unsigned Rcon[10] =
 //Array used by mixColumns()
 unsigned mixArray[4] = {0x02, 0x01, 0x01, 0x03};
 
-//Todo: Test Roundkey Function
-std::vector<long> AddRoundKey(std::vector<long> state, long word[])
+void outputToConsole(std::vector<long> input)
 {
+    std::cout << "Outputting to console\n";
+    for (int i = 0; i < 4; i++)
+        {
+            unsigned bits2d[4][4];
+            // Temporary Value to hold shifted bytes
+            unsigned tempVal = 0;
+            // Extracts each bit from the state and stores it in a temporary array
+            bits2d[i][0] = (input[i] & 0xFF000000) >> 24;
+            bits2d[i][1] = (input[i] & 0x00FF0000) >> 16;
+            bits2d[i][2] = (input[i] & 0x0000FF00) >> 8;
+            bits2d[i][3] = input[i] & 0x000000FF;
+            std::cout << std::hex << bits2d[i][0] << " " << std::hex << bits2d[i][1] << " " << std::hex << bits2d[i][2] << " " << std::hex << bits2d[i][3] << "\n";
+        }
+}
+
+//Todo: Test Roundkey Function
+//std::vector<long> AddRoundKey(std::vector<long> state, long word[])
+std::vector<long> AddRoundKey(std::vector<long> state, std::vector<long> word)
+{
+    std::cout << "\n+++++++Entering AddRound Key Function+++++++\n";
     //addRoundkey
     //Add proper implementation
     unsigned bits[4][4];
@@ -110,6 +129,7 @@ std::vector<long> AddRoundKey(std::vector<long> state, long word[])
     {
     state[a] = (bits[a][0] << 24) + (bits[a][1] << 16) + (bits[a][2] << 8)+ (bits[a][3]);
     }
+    std::cout << "+++++++Exiting AddRound Key Function+++++++\n" << std::endl;
     return state;
 }
 
@@ -123,8 +143,8 @@ unsigned Sbox(unsigned input)
     //Extracts individual characters from byte
     unsigned x = (input & (0xF0)) >> 4;
     unsigned y = input & (0x0F);
-    std::cout << std::hex << x << std::endl;
-    std::cout << std::hex << y << std::endl;
+    // std::cout << std::hex << x << std::endl;
+    // std::cout << std::hex << y << std::endl;
     output = sArray[x][y];
 
     return output;
@@ -155,10 +175,10 @@ unsigned subWord(unsigned input)
     bits[1] = Sbox((input & 0x00FF0000) >> 16);
     bits[2] = Sbox((input & 0x0000FF00) >> 8);
     bits[3] = Sbox(input  & 0x000000FF);
-    std::cout << "Bits 0:" << std::hex << bits[0] << std::endl;
-    std::cout << "Bits 1:" << std::hex << bits[1] << std::endl;
-    std::cout << "Bits 2:" << std::hex << bits[2] << std::endl;
-    std::cout << "Bits 3:" << std::hex << bits[3] << std::endl;
+    // std::cout << "Bits 0:" << std::hex << bits[0] << std::endl;
+    // std::cout << "Bits 1:" << std::hex << bits[1] << std::endl;
+    // std::cout << "Bits 2:" << std::hex << bits[2] << std::endl;
+    // std::cout << "Bits 3:" << std::hex << bits[3] << std::endl;
     unsigned output = 0;
     int a = 0;
     while (a < 4)
@@ -397,11 +417,11 @@ std::vector<long> InvMixColumns(std::vector<long>& state)
 
 //Implementation of Key Expansion
 //long KeyExpansion(long key[], int Nr, int NK)
-std::vector<long> KeyExpansion(long key[], int Nr, int NK)
+std::vector<long> KeyExpansion(std::vector<long> key, int Nr, int NK)
 {
     int i = 0;
     //Define w as a temporary Vector which will be returned.
-    std::vector<long> w;
+    std::vector<long> w = {0x00};
     std::vector<long> temp;
     //w.push_back(1);
     do
@@ -411,11 +431,22 @@ std::vector<long> KeyExpansion(long key[], int Nr, int NK)
         //Didnt implement this right
         long addValue = key[(4*i)] + key[(4*i) + 1] + key[(4*i) + 2] + key[(4*i) + 3];
         //w[i] = key[(4*i)*((4*i)+3)];
-        //w[i].push_back(addValue);
-        w[i] = addValue;
+        std::cout << "addValue: " << addValue << " \n";
+        if (i == 0)
+            {
+            w[i] = addValue;  
+            std::cout << "Added Value\n";
+            }
+        else
+            {
+            w.push_back(addValue);
+            std::cout << "Added Value\n";
+            }
+        std::cout << "Current I: " << i << " \n";
         i++;
     }
     while (i <= (NK -1));
+    std::cout << "+++++++First Do while loop exited+++++++\n";
     do
     {
         unsigned temp = w[i-1];
@@ -427,7 +458,8 @@ std::vector<long> KeyExpansion(long key[], int Nr, int NK)
         {
         temp = subWord(temp);
         }
-        w[i] = w[i- NK] ^ temp;
+        //w[i] = w[i- NK] ^ temp;
+        std::cout << "Current I: " << i << " \n";
         i++;
     } while (i <= (Nr +3));
     return w;
@@ -447,6 +479,7 @@ long KeyExpansionEIC(long key[], int Nr, int NK)
         i++;
     }
     while (i <= (NK -1));
+    std::cout << "+++++++First Do while loop exited+++++++\n";
     do
     {
         unsigned temp = w[i-1];
@@ -466,41 +499,64 @@ long KeyExpansionEIC(long key[], int Nr, int NK)
 }
 
 
-std::vector<long> AEScipher (int input[],int NumRounds, long w[], int NK)
+std::vector<long> AEScipher (std::vector<long> input,int NumRounds, std::vector<long> w, int NK)
 {
+    std::cout << "\n+++++++Entering AESCipher Function+++++++\n" << std::endl;
     //Gets state from input byte array to encrypt
-
-    /*
-    TODO, Continue work on functions.
-    */
-
     //long state[NumRounds] = input;
     //State is implemented as a vector of ints, each int holds 4 bytes
     //std::vector<long>state;
     //Push_back
 
-    std::vector<long>state = {0x000000AA, 0x0000AA00, 0x00AA0000, 0xAA000000};
+    std::vector<long>state = input;
 
+    std::vector<long> wordSection = {0x01, 0x02, 0x03, 0x04};
 
     // Run state through the add roundkey function
     //Arguments for this call are from w[0] to w[3]
-    state = AddRoundKey(state, w);
+    std::cout << "+++++++Selecting Word Chunk+++++++\n";
+    for (int GetVals = 0; GetVals < 4; GetVals++)
+    {
+        wordSection[GetVals] = w[GetVals];
+    }
+    std::cout << "+++++++Adding RoundKey+++++++\n";
+    state = AddRoundKey(state, wordSection);
     //For loop included in Cipher, state is plugged into SubBytes, ShiftRows, MixColumns, and AddRoundKey again.
     //Need to Implement SubBytes, ShiftRows, and MixColumns
-    for (int i = NumRounds; i < (NumRounds-1); i++)
+    //Currently Function seems to not be calling values correctly
+    //I is the current round of the for loop
+    for (int i = 1; i < (NumRounds-1); i++)
     {
         state =   SubBytes(state);
+        std::cout << "+++++++Running SubBytes+++++++\n";
+        outputToConsole(state);
         state =  ShiftRows(state);
+        std::cout << "+++++++Running ShiftRows+++++++\n";
+        outputToConsole(state);
         state = MixColumns(state);
-        state = AddRoundKey(state,w);
+        std::cout << "+++++++Running MixColumns+++++++\n";
+        outputToConsole(state);
+        //Gets section of word key based off of the current round
+        for (int GetVals = (i*4); GetVals < ((4*i) + 3); GetVals++)
+        {
+            wordSection[GetVals] = w[GetVals];
+        }
+        state = AddRoundKey(state,wordSection);
+        std::cout << "+++++++Running AddRoundKey+++++++\n";
+        outputToConsole(state);
     }
     state = SubBytes(state);
     state = ShiftRows(state);
-    state = AddRoundKey(state,w);
+    for (int GetVals = (NumRounds*4); GetVals < ((4*NumRounds) + 3); GetVals++)
+        {
+            wordSection[GetVals] = w[GetVals];
+        }
+    state = AddRoundKey(state,wordSection);
+    outputToConsole(state);
     return state;
 }
 
-std::vector<long> InvCipher (int input[],int NumRounds, long w[], long key, int NK)
+std::vector<long> InvCipher (int input[],int NumRounds, std::vector<long> w, long key, int NK)
 {
     //Gets state from input byte array to encrypt
 
@@ -531,7 +587,7 @@ std::vector<long> InvCipher (int input[],int NumRounds, long w[], long key, int 
 }
 
 //Alternative implementation of Inverse Cipher
-std::vector<long> EqInvCipher (int input[],int NumRounds, long w[], long key, int NK)
+std::vector<long> EqInvCipher (int input[],int NumRounds, std::vector<long> w, long key, int NK)
 {
     //Gets state from input byte array to encrypt
     /*
@@ -560,32 +616,27 @@ std::vector<long> EqInvCipher (int input[],int NumRounds, long w[], long key, in
 }
 
 //Key length is 128 bits, Block size is 128 bits, Number of rounds is 10, NK = 4
-std::vector<long> AES128(int input[], long key)
+std::vector<long> AES128(std::vector<long> input, std::vector<long> key)
 {
     int NK = 4;
-    //Temporary value, will function as word before KeyExpansion
-    long arrayVal[10];
-    std::vector<long> output = AEScipher(input, 10, arrayVal, NK);
+    //std::vector<long> output = AEScipher(input, 10, key, NK);
+    std::vector<long> output = AEScipher(input, 10, KeyExpansion(key, 10, NK), NK);
     return output;
 }
 
 //Key length is 192 bits, Block size is 192 bits, Number of rounds is 12, NK = 6
-std::vector<long> AES192(int input[], long key)
+std::vector<long> AES192(std::vector<long> input, std::vector<long> key)
 {
     int NK = 6;
-    //Temporary value, will function as word before KeyExpansion
-    long arrayVal[12];
-    std::vector<long> output = AEScipher(input, 12, arrayVal, NK);
+    std::vector<long> output = AEScipher(input, 12, key, NK);
     return output;
 }
 
 //Key length is 256 bits, Block size is 256 bits, Number of rounds is 14, NK = 8
-std::vector<long> AES256(int input[], long key)
+std::vector<long> AES256(std::vector<long> input, std::vector<long> key)
 {
     int NK = 8;
-    //Temporary value, will function as word before KeyExpansion
-    long arrayVal[14];
-    std::vector<long> output = AEScipher(input, 14, arrayVal, NK);
+    std::vector<long> output = AEScipher(input, 14, key, NK);
     return output;
 }
 
