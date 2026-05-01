@@ -421,28 +421,17 @@ std::vector<long> KeyExpansion(std::vector<long> key, int Nr, int NK)
 {
     int i = 0;
     //Define w as a temporary Vector which will be returned.
-    std::vector<long> w = {0x00};
+    //std::vector<long> w = {0x00};
+    std::vector<long> w;
     std::vector<long> temp;
-    //w.push_back(1);
+    std::vector<long> words;
     do
     {
-        //Pull key from 4i to 4i+3
-        //ToDo: Revise Key expansion, implement run thriugh key 4*i through 4*i+3
-        //Didnt implement this right
-        long addValue = key[(4*i)] + key[(4*i) + 1] + key[(4*i) + 2] + key[(4*i) + 3];
-        //w[i] = key[(4*i)*((4*i)+3)];
-        std::cout << "addValue: " << addValue << " \n";
-        if (i == 0)
-            {
-            w[i] = addValue;  
-            std::cout << "Added Value\n";
-            }
-        else
-            {
-            w.push_back(addValue);
-            std::cout << "Added Value\n";
-            }
-        std::cout << "Current I: " << i << " \n";
+        // long addValue = key[(4*i)] + key[(4*i) + 1] + key[(4*i) + 2] + key[(4*i) + 3];
+        // //std::cout << "addValue: " << std::hex << addValue << " \n";
+        // w.push_back(addValue);
+        w.push_back(key[i]);
+        //std::cout << "Current I: " << i << " \n";
         i++;
     }
     while (i <= (NK -1));
@@ -458,10 +447,18 @@ std::vector<long> KeyExpansion(std::vector<long> key, int Nr, int NK)
         {
         temp = subWord(temp);
         }
+        //std::cout << "w[" << i << "] should be: " << std::hex << (w[i- NK] ^ temp) << std::endl;
         //w[i] = w[i- NK] ^ temp;
-        std::cout << "Current I: " << i << " \n";
+        w.push_back(w[i- NK] ^ temp);
+        //std::cout << "w[" << i << "] is: " << std::hex << w[i] << std::endl;
+        //std::cout << "Edited w[i] \n" <<"Current I: " << i << " \n";
         i++;
-    } while (i <= (Nr +3));
+    } while (i <= ((4*Nr) +3));
+    for (int a = 0; a < i; a++)
+    {
+    std::cout << "w[" << a << "] is: " << std::hex << w[a] << std::endl;
+    }
+    std::cout << "Returning w" << "\n";
     return w;
 }
 

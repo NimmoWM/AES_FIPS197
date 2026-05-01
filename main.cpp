@@ -25,12 +25,13 @@ int main()
     //Test values used for easy reading of different outputs for individual function outputs
     vector<long> testVals = {0xa1a2a3a4, 0xb1b2b3b4, 0xc1c2c3c4, 0xd1d2d3d4};
     unsigned testword = 0x11223344;
-    vector<long> outputVals = {0x00};
+    vector<long> outputVals;
     //Test values used to confirm correct function based on Appendix A.1 cipher example in the EAS Document.
     //Key is stored in long values of 4 numbers per value with 2 hex values each.
     //vector<long> testKey128 = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0xc3};
-    vector<long> testKey128_1 = {0x2b7e516, 0x28aed2a6, 0xabf71588, 0x09cf4fc3};
+    vector<long> testKey128_1 = {0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4fc3};
     vector<long> testKey128_2 = {0x2b28ab09, 0x7eaef7cf, 0x15d2154f, 0x16a6883c};
+    vector<long> testKey128 = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0xc3};
     //vector<long> testInput128 = {0x32, 0x43, 0xf6, 0xa8 , 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
     //Test input vector in words of 4;
     vector<long> testInput128 = {0x3243f6a8 , 0x885a308d, 0x313198a2, 0xe0370734};
@@ -234,13 +235,15 @@ int main()
     //Need to make sure my KeyExpansion Functions work, will show different data to test.
     case 9:
         cout << "You chose to Test KeyExpansion\n";
-        outputVals = KeyExpansion(testKey128_1, 10, 4);
+        /*outputVals =*/ KeyExpansion(testKey128_1, 10, 4);
         cout << "After running KeyExpansion\n";
+        //KeyExpansion(testKey128, 10, 4);
         break;
     case 10:
     cout << "You chose to Test InvKeyExpansion\n";
         for (int i = 0; i < 4; i++)
         {
+            //<!-- amogus -->
             unsigned bits[4];
             // Temporary Value to hold shifted bytes
             unsigned tempVal = 0;
